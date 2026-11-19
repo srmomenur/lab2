@@ -1,0 +1,90 @@
+
+import java.io.*;
+import java.net.*;
+
+public class Server {
+    public static void main(String[] args) {
+        try {
+            ServerSocket ss = new ServerSocket(6000);
+
+            System.out.println("Server started. Waiting for clients...");
+
+            while (true) {
+                Socket s = ss.accept();
+
+                System.out.println("New client connected.");
+
+                // Create a new thread for each client
+                ClientHandler clientHandler = new ClientHandler(s);
+
+                // Start the thread
+                new Thread(clientHandler).start();
+            }
+
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+    }
+}
+
+class ClientHandler implements Runnable {
+
+    Socket socket;
+    DataInputStream din;
+    DataOutputStream dout;
+    BufferedReader br;
+
+    public ClientHandler(Socket socket) {
+        try {
+            this.socket = socket;
+
+            this.din = new DataInputStream(
+                socket.getInputStream()
+            );
+
+            this.dout = new DataOutputStream(
+                socket.getOutputStream()
+            );
+
+            this.br = new BufferedReader(
+                new InputStreamReader(System.in)
+            );
+
+        } catch (IOException e) {
+            System.out.println(e);
+        }
+    }
+
+    @Override
+    public void run() {
+
+        String str = "", str2 = "";
+
+        try {
+            while (!str.equals("exit")) {
+
+                str = din.readUTF();
+
+                System.out.println("Client Says: " + str);
+
+                str2 = br.readLine();
+
+                dout.writeUTF(str2);
+                dout.flush();
+            }
+
+        } catch (IOException e) {
+            System.out.println(e);
+
+        } finally {
+            try {
+                din.close();
+                dout.close();
+                socket.close();
+
+            } catch (IOException e) {
+                System.out.println(e);
+            }
+        }
+    }
+}
